@@ -1,8 +1,11 @@
+from pathlib import Path
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import openpyxl
-from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+EXCEL_PATH = BASE_DIR / "active forcast.xlsx"
 
 # Set up page config
 st.set_page_config(
@@ -10,8 +13,12 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
-workbook_path = Path(__file__).with_name("active forcast.xlsx")
-df = pd.read_excel(workbook_path, sheet_name="Sales")
+
+if not EXCEL_PATH.exists():
+    st.error(f"Excel file not found: {EXCEL_PATH}")
+    st.stop()
+
+df = pd.read_excel(EXCEL_PATH, sheet_name="Sales")
 
 # Calculate yearly value (Yearly_used * Price)
 df["Yearly_Value"] = df["Yearly_used"] * df["Price"]
@@ -60,20 +67,17 @@ with left_col:
 
 with right_col:
     st.subheader("📈 Usage Comparison Chart")
-    # Melt dataframe for easy comparison in Plotly
-    df_melted = df.melt(id_vars=["Item Name"], value_vars=["Monthly_used", "forecast(six)", "Yearly_used"],
-                        var_name="Metric", value_name="Kg")
-    fig = px.bar(
-        df_melted, 
-        x="Item Name", 
-        y="Kg", 
-        color="Metric", 
-        barmode="group",
-        title="Usage Metrics Breakdown by Item",
-        labels={"Kg": "Quantity / Volume", "Item Name": "Product Item"},
-        height=500
+    usage_chart_df = df.sort_values("Yearly_used", ascending=False)
+    fig = px.pie(
+        usage_chart_df,
+        names="Item Name",
+        values="Yearly_used",
+        title="Yearly Used Quantity by Item",
+        labels={"Yearly_used": "Quantity / Volume", "Item Name": "Product Item"},
+        hole=0.35,
+        height=500,
     )
-    fig.update_layout(xaxis_tickangle=-45)
+    fig.update_traces(textposition="inside", textinfo="label+percent")
     st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
