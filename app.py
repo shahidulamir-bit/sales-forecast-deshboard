@@ -1,11 +1,8 @@
-from pathlib import Path
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-
-BASE_DIR = Path(__file__).resolve().parent
-EXCEL_PATH = BASE_DIR / "active forcast.xlsx"
+import openpyxl
+from pathlib import Path
 
 # Set up page config
 st.set_page_config(
@@ -13,12 +10,8 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
-
-if not EXCEL_PATH.exists():
-    st.error(f"Excel file not found: {EXCEL_PATH}")
-    st.stop()
-
-df = pd.read_excel(EXCEL_PATH, sheet_name="Sales")
+workbook_path = Path(__file__).with_name("active forcast.xlsx")
+df = pd.read_excel(workbook_path, sheet_name="Sales")
 
 # Calculate yearly value (Yearly_used * Price)
 df["Yearly_Value"] = df["Yearly_used"] * df["Price"]
